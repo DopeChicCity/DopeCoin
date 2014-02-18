@@ -52,9 +52,9 @@ bool fTxIndex = false;
 unsigned int nCoinCacheSize = 5000;
 
 /** Fees smaller than this (in satoshi) are considered zero fee (for transaction creation) */
-int64 CTransaction::nMinTxFee = 100000000;
+int64 CTransaction::nMinTxFee = 100000; // was 100000000
 /** Fees smaller than this (in satoshi) are considered zero fee (for relaying) */
-int64 CTransaction::nMinRelayTxFee = 100000000;
+int64 CTransaction::nMinRelayTxFee = 100000; // was 100000000
 
 CMedianFilter<int> cPeerBlockCounts(8, 0); // Amount of blocks that other nodes claim to have
 
@@ -2909,7 +2909,43 @@ bool InitBlockIndex() {
         printf("%s\n", hashGenesisBlock.ToString().c_str());
         printf("%s\n", block.hashMerkleRoot.ToString().c_str());
 
- 
+        // If genesis block hash does not match, then generate new genesis hash.
+		
+		
+        // If genesis block hash does not match, then generate new genesis hash.
+         if ( FALSE && block.GetHash() != hashGenesisBlock)
+         {
+             printf("Searching for genesis block...\n");
+             // This will figure out a valid hash and Nonce if you're
+             // creating a different genesis block:
+             uint256 hashTarget = CBigNum().SetCompact(block.nBits).getuint256();
+             uint256 thash;
+
+             while(true)
+             {
+                 static char scratchpad[SCRYPT_SCRATCHPAD_SIZE];
+                 scrypt_1024_1_1_256_sp_generic(BEGIN(block.nVersion), BEGIN(thash), scratchpad);
+                 //thash = scrypt_blockhash(BEGIN(block.nVersion));
+                 if (thash <= hashTarget)
+                     break;
+                 if ((block.nNonce & 0xFFF) == 0)
+                 {
+                     printf("nonce %08X: hash = %s (target = %s)\n", block.nNonce, thash.ToString().c_str(), hashTarget.ToString().c_str());
+                 }
+                 ++block.nNonce;
+                 if (block.nNonce == 0)
+                 {
+                     printf("NONCE WRAPPED, incrementing time\n");
+                     ++block.nTime;
+                 }
+             }
+             printf("block.nTime = %u \n", block.nTime);
+             printf("block.nNonce = %u \n", block.nNonce);
+             printf("block.GetHash = %s\n", block.GetHash().ToString().c_str());
+             exit(0);
+        }
+
+
 
 		
 		
